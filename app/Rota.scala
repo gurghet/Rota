@@ -6,6 +6,7 @@ import scala.collection.mutable
 class Rota(nDays: Int, team: Set[WorkerId]) {
   private val shiftsPerDay = 3
   private val maxGlobalTeamSize = 5
+  private val r = scala.util.Random
 
   // all the shifts have an implicit day and order
   // for example the with 3 shifts per day the 4th
@@ -16,7 +17,6 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
     * Write an initial random solution
     */
   def init() {
-    val r = scala.util.Random
 
     // calculations are 1-indexed
     (1 to nDays)
@@ -41,7 +41,20 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
     // todo: convert to immutable
   }
 
+  def randomShift = (r.nextInt(nDays) + 1, r.nextInt(shiftsPerDay) + 1)
+
+  def drawRandomWorker()(implicit : WorkerId = {
+    val shift = shifts(randomShift)
+    val teamSize = shift.size
+    shift.iterator.drop(r.nextInt(teamSize)).next
+  }
+
+  def addWorkerToShift(shift: (Int, Int)) {
+    val shift = shifts(randomShift)
+  }
+
   def swap(): Unit = {
+
 
   }
 }
