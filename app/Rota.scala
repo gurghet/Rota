@@ -30,14 +30,15 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
         }
           rota += (day, shift) -> currentShiftTeam
     }
+    println(s"initial solution is $get")
   }
 
-  def get(): collection.Map[(Int, Int), collection.Set[WorkerId]] = {
+  def get(): collection.immutable.Map[(Int, Int), collection.immutable.Set[WorkerId]] = {
     (1 to nDays)
       .flatMap(day => (1 to shiftsPerDay).map(shift => (day, shift)))
       .map{ case (day, shift) =>
-        (day, shift) -> rota(day, shift)
-      }.toMap[(Int, Int), collection.Set[WorkerId]]
+        (day, shift) -> rota(day, shift).toSet
+      }.toMap[(Int, Int), collection.immutable.Set[WorkerId]]
   }
 
   def randomShift = (r.nextInt(nDays) + 1, r.nextInt(shiftsPerDay) + 1)
@@ -55,7 +56,9 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
       Option.empty[WorkerId]
     } else {
       val teamSize = shift.size
-      Option(shift.iterator.drop(r.nextInt(teamSize)).next)
+      val pickedWorker = shift.iterator.drop(r.nextInt(teamSize)).next
+      shift.remove(pickedWorker)
+      Option(pickedWorker)
     }
   }
 
@@ -65,16 +68,22 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
   }
 
   def swap() {
+    println(s"Rota is $get")
     val maybeWorker = drawRandomWorkerFromRandomShift()
 
     if (maybeWorker.isDefined) {
+      println(s"worker picked $get")
       val worker = maybeWorker.get
+      print(s"Moving worker $worker ")
       var shift = rota(randomShift)
+      println(s"inside $shift")
       // if the worker is already present take another shift
       while (shift.contains(worker)) {
         shift = rota(randomShift)
+        println(s"nope already there, let's try with $shift")
       }
       shift += worker
+      println(s"now Rota is $get")
     }
 
   }
