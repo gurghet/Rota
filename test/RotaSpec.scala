@@ -17,7 +17,7 @@ class RotaSpec extends FlatSpec with Matchers {
   }
 
   it should "swap two workers" in {
-    val rota = new Rota(1, Set(WorkerId(1), WorkerId(2)))
+    val rota = new Rota(30, Set(WorkerId(1), WorkerId(2), WorkerId(3), WorkerId(4), WorkerId(5), WorkerId(6)))
     rota.init()
     val rotaInit = rota.get
     rota.swap()

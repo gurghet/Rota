@@ -1,3 +1,4 @@
+import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable
 
 /**
@@ -12,6 +13,11 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
   // for example the with 3 shifts per day the 4th
   // shift is the 1st shift of the second day
   private val rota = mutable.LinkedHashMap.empty[(Int, Int), mutable.Set[WorkerId]]
+  private var shiftProperties = List.empty[collection.immutable.Set[String]]
+  private var workerPreferences = collection.immutable.Map.empty[WorkerId, List[Int]]
+
+  def allShifts: IndexedSeq[(Int, Int)] = (1 to nDays)
+    .flatMap(day => (1 to shiftsPerDay).map(shift => (day, shift)))
 
   /**
     * Write an initial random solution
@@ -19,8 +25,7 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
   def init() {
 
     // calculations are 1-indexed
-    (1 to nDays)
-      .flatMap(day => (1 to shiftsPerDay).map(shift => (day, shift)))
+    allShifts
       .foreach{ case (day, shift) =>
         val currentShiftTeam = mutable.HashSet.empty[WorkerId]
         val availableWorkers = team.toBuffer
@@ -30,12 +35,10 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
         }
           rota += (day, shift) -> currentShiftTeam
     }
-    println(s"initial solution is $get")
   }
 
   def get(): collection.immutable.Map[(Int, Int), collection.immutable.Set[WorkerId]] = {
-    (1 to nDays)
-      .flatMap(day => (1 to shiftsPerDay).map(shift => (day, shift)))
+    allShifts
       .map{ case (day, shift) =>
         (day, shift) -> rota(day, shift).toSet
       }.toMap[(Int, Int), collection.immutable.Set[WorkerId]]
@@ -48,7 +51,6 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
     var shift = rota(randomShift1)
     var trial = 1; val maxTrials = 5
     while (shift.isEmpty || trial > maxTrials) {
-      println(s"worker not found in shift $randomShift1")
       trial += 1
       shift = rota(randomShift)
     }
@@ -68,22 +70,16 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
   }
 
   def swap() {
-    println(s"Rota is $get")
     val maybeWorker = drawRandomWorkerFromRandomShift()
 
     if (maybeWorker.isDefined) {
-      println(s"worker picked $get")
       val worker = maybeWorker.get
-      print(s"Moving worker $worker ")
       var shift = rota(randomShift)
-      println(s"inside $shift")
       // if the worker is already present take another shift
       while (shift.contains(worker)) {
         shift = rota(randomShift)
-        println(s"nope already there, let's try with $shift")
       }
       shift += worker
-      println(s"now Rota is $get")
     }
 
   }
@@ -100,6 +96,30 @@ class Rota(nDays: Int, team: Set[WorkerId]) {
   def pickNeighborhood(): () => () => Unit = {
     val neighborhoods = Set(removeRandomWorkerFromRandomShift _, addRandomWorkerToRandomShift _, swap _)
     neighborhoods.iterator.drop(r.nextInt(neighborhoods.size)).next
+  }
+
+  def setPreferencesFor(workerId: WorkerId, preferences: Map[(Int, Int), Int]) {
+    val preferenceList = allShifts
+      .map{ case (day, shift) =>
+        preferences((day, shift))
+    }.toList
+    workerPreferences += (workerId -> preferenceList)
+  }
+
+  def setShiftProperties(properties: Map[(Int, Int), Set[String]]) {
+    shiftProperties = properties.values.toList
+  }
+
+  def getPresenceListFor(workerId: WorkerId): List[Int] = {
+    allShifts
+      .map{ case (day, shift) =>
+          if (rota((day, shift)) contains workerId) 1 else 0
+      }.toList
+  }
+
+  def loss(): Int = {
+    val point = get
+
   }
 }
 
